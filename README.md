@@ -14,6 +14,7 @@ This repository serves as a comprehensive template for kickstarting PHP web deve
 - Traefik proxy for local development.
 - Local PHPMyAdmin database administration interface.
 - Chadburn job scheduling.
+- Added Foundation for Sites
 
 **Usage**:
 
