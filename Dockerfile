@@ -1,14 +1,18 @@
+# Use a specific version of Alpine as the base image
 ARG ALPINE_VERSION=3.19.0
 FROM alpine:${ALPINE_VERSION}
 
+# Metadata as labels
 LABEL Maintainer="Nick Maietta <me@nickmaietta.com>"
 LABEL Description="Lightweight container with Nginx & PHP 8.3 based on Alpine Linux."
 
+# Set environment variables
 ENV NODE_ENV production
 
+# Set working directory
 WORKDIR /var/www/html
 
-# Install packages and remove default server definition
+# Install necessary packages and remove default server definition
 RUN apk add --no-cache \
   curl \
   imagemagick \
@@ -40,26 +44,24 @@ RUN apk add --no-cache \
 # Symlink php8 to php for convenience
 RUN ln -s /usr/bin/php83 /usr/bin/php
 
-# Configure nginx - http
+# Copy nginx configuration files
 COPY webserver/nginx.conf /etc/nginx/nginx.conf
-
-# Configure nginx - default server
 COPY webserver/conf.d /etc/nginx/conf.d/
 
-# Configure PHP-FPM
+# Copy PHP-FPM configuration files
 COPY webserver/fpm-pool.conf /etc/php83/php-fpm.d/www.conf
 COPY webserver/php.ini /etc/php83/conf.d/custom.ini
 
-# Configure supervisord
+# Copy supervisord configuration file
 COPY webserver/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Make sure files/folders needed by the processes are accessable when they run under the nobody user
+# Ensure necessary files/folders are accessible when running under the nobody user
 RUN chown -R nobody.nobody /var/www/html /run /var/lib/nginx /var/log/nginx
 
-# Add application
+# Add application files
 COPY --chown=nobody public_html/ /var/www/html/
 
-# Switch to use a non-root user from here on
+# Switch to use a non-root user
 USER nobody
 
 # Expose the port nginx is reachable on
