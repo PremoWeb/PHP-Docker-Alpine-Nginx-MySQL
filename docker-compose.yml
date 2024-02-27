@@ -65,6 +65,6 @@ services:
       - 'traefik.http.routers.phpmyadmin.entrypoints=web'
     environment:
       PMA_HOST: mysql
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
       PMA_PORT: ${MYSQL_PORT}
