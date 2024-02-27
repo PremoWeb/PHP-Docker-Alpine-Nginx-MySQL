@@ -29,7 +29,7 @@
 						<button
 							hx-get="/api/now"
 							hx-target="#time-slot"
-							hx-swap="outerHTML ignoreTitle:true"
+							hx-swap="innerHTML"
 							class="success button"
 						>
 							Click for the time!
