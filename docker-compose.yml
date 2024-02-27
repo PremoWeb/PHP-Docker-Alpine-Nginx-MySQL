@@ -1,0 +1,74 @@
+version: '3.7'
+
+services:
+  reverse-proxy:
+    image: 'traefik:v2.2'
+    command:
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=true'
+      - '--entrypoints.web.address=:80'
+    ports:
+      - '80:80'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+  mysql:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - 3306:3306
+    volumes:
+      - ./database:/var/lib/mysql
+
+  api:
+    build: .
+    environment:
+      - NODE_ENV=development
+    labels:
+      # Enable reverse proxy to this app.
+      - traefik.enable=true
+      - traefik.http.routers.website.entrypoints=web
+      - traefik.http.routers.website.rule=Host(`api.localhost`)
+
+      # Set port
+      - traefik.http.services.website.loadbalancer.server.port=80
+
+      # Schedules tasks
+      - 'chadburn.enabled=true'
+      # Process tables every 5 seconds
+      - 'chadburn.job-exec.process_tables.no-overlap=true'
+      - 'chadburn.job-exec.process_tables.schedule=@every 10s'
+      - 'chadburn.job-exec.process_tables.command=php /var/www/html/tasks/process_tables.php'
+
+    volumes:
+      - ./public_html:/var/www/html:rw
+      - ./.env:/var/www/.env:ro # Placed here to prevent accidental inclusion in image.
+    depends_on:
+      - mysql
+
+  # Chadburn is CRON alternative written in Go and designed for Docker environments.
+  chadburn:
+    image: premoweb/chadburn:latest
+    depends_on:
+      - api
+      - mysql
+    command: daemon
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    depends_on:
+      - mysql
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.phpmyadmin.rule=Host(`${PMA_HOSTNAME}`)'
+      - 'traefik.http.routers.phpmyadmin.entrypoints=web'
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      PMA_PORT: ${MYSQL_PORT}
