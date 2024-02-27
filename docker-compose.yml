@@ -33,14 +33,10 @@ services:
       - traefik.http.routers.website.entrypoints=web
       - traefik.http.routers.website.rule=Host(`api.localhost`)
 
-      # Set port
-      - traefik.http.services.website.loadbalancer.server.port=80
-
       # Schedules tasks
-      - 'chadburn.enabled=true'
-      # Process tables every 5 seconds
+      - 'chadburn.enabled=false'
       - 'chadburn.job-exec.process_tables.no-overlap=true'
-      - 'chadburn.job-exec.process_tables.schedule=@every 10s'
+      - 'chadburn.job-exec.process_tables.schedule=@every 10s' # Process tables every 5 seconds
       - 'chadburn.job-exec.process_tables.command=php /var/www/html/tasks/process_tables.php'
 
     volumes:
